@@ -30,7 +30,13 @@
             var textbox = element as TextBox;
             if (textbox == null)
             {
-                throw new AutomationException("Element referenced is not a TextBox.", ResponseStatus.UnknownError);
+                var pwdboxbox = element as PasswordBox;
+                if (pwdboxbox == null)
+                {
+                    throw new AutomationException("Element referenced is not a TextBox or Passwordbox.", ResponseStatus.UnknownError);
+                }
+                TrySetText(pwdboxbox, this.KeyString);
+                return this.JsonResponse();
             }
 
             TrySetText(textbox, this.KeyString);
@@ -54,6 +60,25 @@
             {
                 textbox.Text = text;
                 textbox.SelectionStart = text.Length;
+            }
+
+            // TODO: new parameter - FocusState
+            textbox.Focus(FocusState.Pointer);
+        }
+
+        private static void TrySetText(PasswordBox textbox, string text)
+        {
+            // TODO: why IValueProvider is null in UniApp?
+            var peer = new PasswordBoxAutomationPeer(textbox);
+            var valueProvider = peer.GetPattern(PatternInterface.Value) as IValueProvider;
+            if (valueProvider != null)
+            {
+                valueProvider.SetValue(text);
+            }
+            else
+            {
+                textbox.Password = text;
+                textbox.SelectAll();
             }
 
             // TODO: new parameter - FocusState
